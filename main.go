@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/abdelrhman-basyoni/gobooks/config"
 	userModule "github.com/abdelrhman-basyoni/gobooks/modules/user"
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +13,7 @@ func main() {
 	/**
 	create router and listen on a a port
 	*/
-	go config.ConnectDB()
+	// go config.ConnectDB()
 	router := gin.Default()
 	router.GET("/test", func(ctx *gin.Context) {
 		ctx.String(http.StatusAccepted, "it works")

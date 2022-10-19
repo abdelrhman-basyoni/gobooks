@@ -57,12 +57,13 @@ func ConnectDB() *mongo.Client {
 		log.Fatal(err)
 	}
 
-	client.Database("gobooks")
+	client.Database("golangAPI")
 	log.Printf("Connected to MongoDB")
 	//register to the instance
 	// mongod.client = client
 	// mongod.database = client.Database("gobooks")
 	// mongod.userCollection = mongod.database.Collection("user")
+
 	return client
 }
 

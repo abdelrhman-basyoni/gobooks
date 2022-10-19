@@ -7,8 +7,12 @@ type UserRoutes struct {
 }
 
 func RegisterUserRoutes(routerGroup *gin.RouterGroup) {
-	userRoutes := &UserRoutes{}
+	// userRoutes := &UserRoutes{}
 	//All routes related to users comes here
-	routerGroup.POST("", userRoutes.CreateUser)
+	routerGroup.POST("/create", CreateUser)
+	routerGroup.GET("/getall/", GetUsers)
+	routerGroup.GET("/get/:id", GetUser)
+	routerGroup.PUT("/edit/:id", EditUser)
+	routerGroup.DELETE("/get/:id", GetUser)
 
 }
