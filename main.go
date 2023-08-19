@@ -22,7 +22,7 @@ func main() {
 	//register the routes
 	userModule.RegisterUserRoutes(router.Group(("user")))
 
-	fmt.Printf("server runnung on port 6000 \n")
+	fmt.Printf("server running on port 6000 \n")
 	log.Fatalln(router.Run(":6000"))
 
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/abdelrhman-basyoni/gobooks/dto"
 	"github.com/abdelrhman-basyoni/gobooks/models"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,13 +30,15 @@ func CreateUser(ginContext *gin.Context) {
 
 	//validate the request body
 	if err := ginContext.BindJSON(&user); err != nil {
-		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		errMessage := err.Error()
+		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Status: http.StatusBadRequest, Message: "error", ErrorMessage: &errMessage})
 		return
 	}
 
 	// use the validator library to validate required fields
 	if validationErr := validate.Struct(&user); validationErr != nil {
-		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}})
+		errMessage := validationErr.Error()
+		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Status: http.StatusBadRequest, Message: "error", ErrorMessage: &errMessage})
 		return
 	}
 
@@ -53,7 +55,7 @@ func CreateUser(ginContext *gin.Context) {
 		return
 	}
 
-	ginContext.JSON(http.StatusCreated, dto.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+	ginContext.JSON(http.StatusCreated, dto.UserResponse{Status: http.StatusCreated, Message: "success", Data: result})
 }
 
 func GetUser(ginContext *gin.Context) {
