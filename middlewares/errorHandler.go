@@ -18,7 +18,7 @@ func GlobalErrorHandler() gin.HandlerFunc {
 			switch err.Err.(type) {
 			case *customErrors.DataBaseError:
 				if strings.Contains(errorMassage, "E11000 duplicate key") {
-					errorMassage = "E11000 duplicate key"
+					errorMassage = "Duplicate key"
 
 				}
 				errorMassage = "DataBaseError"
