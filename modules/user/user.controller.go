@@ -10,6 +10,7 @@ import (
 
 	"github.com/abdelrhman-basyoni/gobooks/config"
 	"github.com/abdelrhman-basyoni/gobooks/dto"
+	customErrors "github.com/abdelrhman-basyoni/gobooks/errors"
 	"github.com/abdelrhman-basyoni/gobooks/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -28,18 +29,22 @@ func CreateUser(ginContext *gin.Context) {
 	var user models.User
 	defer cancel()
 
-	//validate the request body
+	// validate the request body
 	if err := ginContext.BindJSON(&user); err != nil {
-		errMessage := err.Error()
-		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Status: http.StatusBadRequest, Message: "error", ErrorMessage: &errMessage})
+		ginContext.Error(err)
+		// errors.New(err.Error())
+		// panic(err.Error())
 		return
+
 	}
 
 	// use the validator library to validate required fields
 	if validationErr := validate.Struct(&user); validationErr != nil {
-		errMessage := validationErr.Error()
-		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Status: http.StatusBadRequest, Message: "error", ErrorMessage: &errMessage})
+		ginContext.Error(validationErr)
+		// errors.New(validationErr.Error())
+		// panic(validationErr.Error())
 		return
+
 	}
 
 	newUser := models.User{
@@ -51,11 +56,16 @@ func CreateUser(ginContext *gin.Context) {
 
 	result, err := userCollection.InsertOne(ctx, newUser)
 	if err != nil {
-		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		customErr := &customErrors.DataBaseError{
+			Message: err.Error(),
+		}
+
+		ginContext.Error(customErr)
+		// ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
-	ginContext.JSON(http.StatusCreated, dto.UserResponse{Status: http.StatusCreated, Message: "success", Data: result})
+	ginContext.JSON(http.StatusCreated, dto.UserResponse{Data: result})
 }
 
 func GetUser(ginContext *gin.Context) {
@@ -69,12 +79,11 @@ func GetUser(ginContext *gin.Context) {
 
 	err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
 	if err != nil {
-		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
-	ginContext.JSON(http.StatusOK, dto.UserResponse{
-		Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
+	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"data": user}})
 }
 func GetUsers(ginContext *gin.Context) {
 
@@ -87,7 +96,7 @@ func GetUsers(ginContext *gin.Context) {
 
 	if err != nil {
 		fmt.Print(err.Error())
-		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 	//reading from the db in an optimal way
@@ -97,14 +106,13 @@ func GetUsers(ginContext *gin.Context) {
 		var singleUser models.User
 		fmt.Printf(singleUser.UserName)
 		if err = results.Decode(&singleUser); err != nil {
-			ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
 		}
 
 		users = append(users, singleUser)
 	}
 
-	ginContext.JSON(http.StatusOK, dto.UserResponse{
-		Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": users}})
+	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"data": users}})
 }
 
 func EditUser(ginContext *gin.Context) {
@@ -117,7 +125,7 @@ func EditUser(ginContext *gin.Context) {
 
 	defer cancel()
 	if err := ginContext.BindJSON(&user); err != nil {
-		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 	update := bson.M{}
@@ -145,10 +153,9 @@ func EditUser(ginContext *gin.Context) {
 
 	err := userCollection.FindOneAndUpdate(ctx, bson.M{"_id": objId}, bson.M{"$set": update}, &opt).Decode(&updatedUser)
 	if err != nil {
-		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
-	ginContext.JSON(http.StatusOK, dto.UserResponse{
-		Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": updatedUser}})
+	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"data": updatedUser}})
 
 }

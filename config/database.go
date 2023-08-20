@@ -6,13 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abdelrhman-basyoni/gobooks/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"github.com/abdelrhman-basyoni/gobooks/utils"
 )
 
-//define the collections
+// define the collections
 type MongoDB struct {
 	client         *mongo.Client
 	database       *mongo.Database
@@ -39,17 +38,14 @@ var instance *MongoDB
 // }
 
 func ConnectDB() *mongo.Client {
-	client, err := mongo.NewClient(options.Client().ApplyURI(utils.ReadEnv("MONGO_URI")))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(utils.ReadEnv("MONGO_URI")))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	//trying to connect to the database
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	//ping the database
 	err = client.Ping(ctx, nil)
@@ -69,7 +65,7 @@ func ConnectDB() *mongo.Client {
 
 var DB *mongo.Client = ConnectDB()
 
-//getting database collections
+// getting database collections
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	collection := client.Database("golangAPI").Collection(collectionName)
 	return collection
