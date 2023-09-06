@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/abdelrhman-basyoni/gobooks/config"
+	domain "github.com/abdelrhman-basyoni/gobooks/core/domain/useCases"
+	mongoRepos "github.com/abdelrhman-basyoni/gobooks/core/implementation/repositories/mongo"
 	"github.com/abdelrhman-basyoni/gobooks/dto"
 	customErrors "github.com/abdelrhman-basyoni/gobooks/errors"
 	"github.com/abdelrhman-basyoni/gobooks/models"
@@ -25,15 +27,12 @@ var validate = validator.New()
 
 func CreateUser(ginContext *gin.Context) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var user models.User
-	defer cancel()
 
 	// validate the request body
 	if err := ginContext.BindJSON(&user); err != nil {
 		ginContext.Error(err)
-		// errors.New(err.Error())
-		// panic(err.Error())
+
 		return
 
 	}
@@ -41,31 +40,24 @@ func CreateUser(ginContext *gin.Context) {
 	// use the validator library to validate required fields
 	if validationErr := validate.Struct(&user); validationErr != nil {
 		ginContext.Error(validationErr)
-		// errors.New(validationErr.Error())
-		// panic(validationErr.Error())
+
 		return
 
 	}
+	userRepo := mongoRepos.UserRepo{}
 
-	newUser := models.User{
-		Id:       primitive.NewObjectID(),
-		UserName: user.UserName,
-		Password: user.Password,
-		Email:    user.Email,
-	}
-
-	result, err := userCollection.InsertOne(ctx, newUser)
+	err := domain.CreateUser(user.UserName, user.Password, user.Email, &userRepo)
 	if err != nil {
 		customErr := &customErrors.DataBaseError{
 			Message: err.Error(),
 		}
 
 		ginContext.Error(customErr)
-		// ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
+
 		return
 	}
 
-	ginContext.JSON(http.StatusCreated, dto.UserResponse{Data: result})
+	ginContext.JSON(http.StatusCreated, dto.UserResponse{Data: map[string]interface{}{"success": true}})
 }
 
 func GetUser(ginContext *gin.Context) {

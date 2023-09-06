@@ -18,10 +18,13 @@ func GlobalErrorHandler() gin.HandlerFunc {
 			switch err.Err.(type) {
 			case *customErrors.DataBaseError:
 				if strings.Contains(errorMassage, "E11000 duplicate key") {
+
 					errorMassage = "Duplicate key"
 
+				} else {
+					errorMassage = "DataBaseError"
 				}
-				errorMassage = "DataBaseError"
+
 			default:
 				c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
 			}
