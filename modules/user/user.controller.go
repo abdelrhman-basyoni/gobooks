@@ -44,9 +44,10 @@ func CreateUser(ginContext *gin.Context) {
 		return
 
 	}
-	userRepo := mongoRepos.UserRepo{}
 
-	err := domain.CreateUser(user.UserName, user.Password, user.Email, &userRepo)
+	useCases := domain.UserUseCases{}
+	useCases.New(&mongoRepos.UserRepo{})
+	err := useCases.CreateUser(user.UserName, user.Password, user.Email)
 	if err != nil {
 		customErr := &customErrors.DataBaseError{
 			Message: err.Error(),
@@ -61,22 +62,19 @@ func CreateUser(ginContext *gin.Context) {
 }
 
 func GetUser(ginContext *gin.Context) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	userId := ginContext.Param("id")
-	var user models.User
-	defer cancel()
-	// change the id from string to ObjectID
-	objId, _ := primitive.ObjectIDFromHex(userId)
 
-	err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+	useCases := domain.UserUseCases{}
+	useCases.New(&mongoRepos.UserRepo{})
+	user, err := useCases.GetUserById(userId)
 	if err != nil {
-		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
+		ginContext.Error(err)
 		return
 	}
 
-	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"data": user}})
+	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: user})
 }
+
 func GetUsers(ginContext *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
