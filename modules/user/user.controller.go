@@ -3,7 +3,6 @@ package userModule
 import (
 	"net/http"
 
-	"github.com/abdelrhman-basyoni/gobooks/config"
 	domain "github.com/abdelrhman-basyoni/gobooks/core/domain/useCases"
 	mongoRepos "github.com/abdelrhman-basyoni/gobooks/core/implementation/repositories/mongo"
 	"github.com/abdelrhman-basyoni/gobooks/dto"
@@ -11,10 +10,8 @@ import (
 	"github.com/abdelrhman-basyoni/gobooks/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var userCollection *mongo.Collection = config.GetCollection(config.DB, "users")
 var validate = validator.New()
 var useCases = domain.NewUserUseCase(&mongoRepos.UserRepo{})
 
