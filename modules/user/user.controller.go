@@ -1,12 +1,7 @@
 package userModule
 
 import (
-	"context"
-	"fmt"
 	"net/http"
-	"reflect"
-	"strings"
-	"time"
 
 	"github.com/abdelrhman-basyoni/gobooks/config"
 	domain "github.com/abdelrhman-basyoni/gobooks/core/domain/useCases"
@@ -16,10 +11,7 @@ import (
 	"github.com/abdelrhman-basyoni/gobooks/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var userCollection *mongo.Collection = config.GetCollection(config.DB, "users")
@@ -84,46 +76,19 @@ func GetUsers(ginContext *gin.Context) {
 }
 
 func EditUser(ginContext *gin.Context) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 	userId := ginContext.Param("id")
-	var user models.User
-	var updatedUser models.User
 
-	objId, _ := primitive.ObjectIDFromHex(userId)
-
-	defer cancel()
-	if err := ginContext.BindJSON(&user); err != nil {
-		ginContext.JSON(http.StatusBadRequest, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
+	var update map[string]interface{}
+	if err := ginContext.BindJSON(&update); err != nil {
+		ginContext.Error(err)
 		return
 	}
-	update := bson.M{}
-	userdata := reflect.ValueOf(user)
-	usertypes := userdata.Type()
-	for i := 0; i < userdata.NumField(); i++ {
-
-		if usertypes.Field(i).Name == "Id" {
-			fmt.Printf("failed")
-			continue
-		}
-		fieldvalue := userdata.Field(i).Interface().(string)
-
-		if fieldvalue != "" {
-			fmt.Println(strings.ToLower(usertypes.Field(i).Name), fieldvalue)
-			update = bson.M{strings.ToLower(usertypes.Field(i).Name): fieldvalue}
-		}
-
-	}
-
-	after := options.After
-	opt := options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
-	}
-
-	err := userCollection.FindOneAndUpdate(ctx, bson.M{"_id": objId}, bson.M{"$set": update}, &opt).Decode(&updatedUser)
+	updatedUser, err := useCases.EditUser(userId, update)
 	if err != nil {
-		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
+		ginContext.Error(err)
 		return
 	}
-	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"data": updatedUser}})
+	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"updatedUser": updatedUser}})
 
 }

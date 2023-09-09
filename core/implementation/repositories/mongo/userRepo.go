@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var userCollection *mongo.Collection = config.GetCollection(config.DB, "users")
@@ -24,13 +25,10 @@ type UserRepo struct {
 func (u *UserRepo) Create(username, password, email string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	u.Email = email
-	u.Password = password
-	u.UserName = username
+	user := models.User{Email: email, Password: password, UserName: username}
 
 	fmt.Println("createdUser")
-	_, err := userCollection.InsertOne(ctx, u)
+	_, err := userCollection.InsertOne(ctx, user)
 	return err
 }
 
@@ -38,8 +36,11 @@ func (u *UserRepo) GetUserById(id string) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var user models.User
-	objId, _ := primitive.ObjectIDFromHex(id)
-	err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+	objId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	err = userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
@@ -69,4 +70,25 @@ func (u *UserRepo) GetAllUsers() ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (u *UserRepo) EditUser(id string, update map[string]interface{}) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	objId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"_id": objId}
+
+	after := options.After
+	opt := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	var updatedUser models.User
+	err = userCollection.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, &opt).Decode(&updatedUser)
+	if err != nil {
+		return nil, err
+	}
+	return &updatedUser, nil
 }

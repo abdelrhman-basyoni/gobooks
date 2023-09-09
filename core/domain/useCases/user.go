@@ -22,6 +22,10 @@ func (uuc *UserUseCases) GetAllUsers() ([]models.User, error) {
 	return uuc.userRepo.GetAllUsers()
 }
 
+func (uuc *UserUseCases) EditUser(id string, update map[string]interface{}) (*models.User, error) {
+	return uuc.userRepo.EditUser(id, update)
+}
+
 func NewUserUseCase(repo domain.UserRepository) *UserUseCases {
 	return &UserUseCases{
 		userRepo: repo,
