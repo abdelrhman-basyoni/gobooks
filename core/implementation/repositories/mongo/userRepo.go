@@ -46,3 +46,27 @@ func (u *UserRepo) GetUserById(id string) (*models.User, error) {
 
 	return &user, nil
 }
+
+func (u *UserRepo) GetAllUsers() ([]models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var users []models.User
+	results, err := userCollection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	defer results.Close(ctx)
+
+	for results.Next(ctx) {
+		var singleUser models.User
+
+		if err = results.Decode(&singleUser); err != nil {
+			return users, err
+		}
+
+		users = append(users, singleUser)
+	}
+
+	return users, nil
+}

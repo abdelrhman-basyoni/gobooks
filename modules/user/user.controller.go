@@ -24,6 +24,7 @@ import (
 
 var userCollection *mongo.Collection = config.GetCollection(config.DB, "users")
 var validate = validator.New()
+var useCases = domain.NewUserUseCase(&mongoRepos.UserRepo{})
 
 func CreateUser(ginContext *gin.Context) {
 
@@ -40,13 +41,10 @@ func CreateUser(ginContext *gin.Context) {
 	// use the validator library to validate required fields
 	if validationErr := validate.Struct(&user); validationErr != nil {
 		ginContext.Error(validationErr)
-
 		return
 
 	}
 
-	useCases := domain.UserUseCases{}
-	useCases.New(&mongoRepos.UserRepo{})
 	err := useCases.CreateUser(user.UserName, user.Password, user.Email)
 	if err != nil {
 		customErr := &customErrors.DataBaseError{
@@ -64,8 +62,6 @@ func CreateUser(ginContext *gin.Context) {
 func GetUser(ginContext *gin.Context) {
 	userId := ginContext.Param("id")
 
-	useCases := domain.UserUseCases{}
-	useCases.New(&mongoRepos.UserRepo{})
 	user, err := useCases.GetUserById(userId)
 	if err != nil {
 		ginContext.Error(err)
@@ -77,32 +73,14 @@ func GetUser(ginContext *gin.Context) {
 
 func GetUsers(ginContext *gin.Context) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-	var users []models.User
-	defer cancel()
-
-	results, err := userCollection.Find(ctx, bson.M{})
+	users, err := useCases.GetAllUsers()
 
 	if err != nil {
-		fmt.Print(err.Error())
-		ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
+		ginContext.Error(err)
 		return
 	}
-	//reading from the db in an optimal way
-	defer results.Close(ctx)
 
-	for results.Next(ctx) {
-		var singleUser models.User
-		fmt.Printf(singleUser.UserName)
-		if err = results.Decode(&singleUser); err != nil {
-			ginContext.JSON(http.StatusInternalServerError, dto.UserResponse{Data: map[string]interface{}{"data": err.Error()}})
-		}
-
-		users = append(users, singleUser)
-	}
-
-	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"data": users}})
+	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"users": users}})
 }
 
 func EditUser(ginContext *gin.Context) {

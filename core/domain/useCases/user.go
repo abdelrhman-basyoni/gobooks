@@ -6,12 +6,9 @@ import (
 )
 
 type UserUseCases struct {
-	userRepo domain.UserInterface
+	userRepo domain.UserRepository
 }
 
-func (uuc *UserUseCases) New(repo domain.UserInterface) {
-	uuc.userRepo = repo
-}
 func (uuc *UserUseCases) CreateUser(username, password, email string) error {
 
 	return uuc.userRepo.Create(username, password, email)
@@ -20,4 +17,13 @@ func (uuc *UserUseCases) CreateUser(username, password, email string) error {
 
 func (uuc *UserUseCases) GetUserById(id string) (*models.User, error) {
 	return uuc.userRepo.GetUserById(id)
+}
+func (uuc *UserUseCases) GetAllUsers() ([]models.User, error) {
+	return uuc.userRepo.GetAllUsers()
+}
+
+func NewUserUseCase(repo domain.UserRepository) *UserUseCases {
+	return &UserUseCases{
+		userRepo: repo,
+	}
 }
