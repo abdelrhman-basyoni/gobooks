@@ -48,6 +48,30 @@ func CreateUser(ginContext *gin.Context) {
 	ginContext.JSON(http.StatusCreated, dto.UserResponse{Data: map[string]interface{}{"success": true}})
 }
 
+func Login(ginContext *gin.Context) {
+
+	var login dto.LoginDto
+
+	// validate the request body
+	if err := ginContext.BindJSON(&login); err != nil {
+		ginContext.Error(err)
+		return
+	}
+
+	// use the validator library to validate required fields
+	if validationErr := validate.Struct(&login); validationErr != nil {
+		ginContext.Error(validationErr)
+		return
+	}
+	token, err := useCases.Login(login.Email, login.Password)
+	if err != nil {
+		ginContext.Error(err)
+		return
+	}
+	ginContext.JSON(http.StatusCreated, dto.UserResponse{Data: map[string]interface{}{"token": token}})
+
+}
+
 func GetUser(ginContext *gin.Context) {
 	userId := ginContext.Param("id")
 

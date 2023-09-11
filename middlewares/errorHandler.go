@@ -1,7 +1,9 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/abdelrhman-basyoni/gobooks/dto"
@@ -12,9 +14,11 @@ import (
 func GlobalErrorHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-
+		var errorsList []string
 		for _, err := range c.Errors {
-			errorMassage := err.Error()
+			var errorMassage string
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+
 			switch err.Err.(type) {
 			case *customErrors.DataBaseError:
 				if strings.Contains(errorMassage, "E11000 duplicate key") {
@@ -24,13 +28,14 @@ func GlobalErrorHandler() gin.HandlerFunc {
 				} else {
 					errorMassage = "DataBaseError"
 				}
-
+				break
 			default:
-				c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
+				errorMassage = err.Error()
+
 			}
+			errorsList = append(errorsList, errorMassage)
 
-			c.AbortWithStatusJSON(http.StatusBadRequest, dto.Response[any]{ErrorMessage: &errorMassage})
 		}
-
+		c.AbortWithStatusJSON(http.StatusBadRequest, dto.Response[any]{ErrorMessage: &errorsList})
 	}
 }

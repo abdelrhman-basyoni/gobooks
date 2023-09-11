@@ -10,6 +10,7 @@ func RegisterUserRoutes(routerGroup *gin.RouterGroup) {
 	// userRoutes := &UserRoutes{}
 	//All routes related to users comes here
 	routerGroup.POST("/create", CreateUser)
+	routerGroup.POST("/login", Login)
 	routerGroup.GET("/getall/", GetUsers)
 	routerGroup.GET("/get/:id", GetUser)
 	routerGroup.PUT("/edit/:id", EditUser)
