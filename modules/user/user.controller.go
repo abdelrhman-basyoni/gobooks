@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	domain "github.com/abdelrhman-basyoni/gobooks/core/domain/useCases"
-	mongoRepos "github.com/abdelrhman-basyoni/gobooks/core/implementation/repositories/mongo"
+	sqlRepos "github.com/abdelrhman-basyoni/gobooks/core/implementation/repositories/sql"
 	"github.com/abdelrhman-basyoni/gobooks/dto"
 	customErrors "github.com/abdelrhman-basyoni/gobooks/errors"
 	"github.com/abdelrhman-basyoni/gobooks/models"
@@ -13,7 +13,7 @@ import (
 )
 
 var validate = validator.New()
-var useCases = domain.NewUserUseCase(&mongoRepos.UserRepo{})
+var useCases = domain.NewUserUseCase(&sqlRepos.UserRepo{})
 
 func CreateUser(ginContext *gin.Context) {
 
@@ -46,6 +46,7 @@ func CreateUser(ginContext *gin.Context) {
 	}
 
 	ginContext.JSON(http.StatusCreated, dto.UserResponse{Data: map[string]interface{}{"success": true}})
+	return
 }
 
 func Login(ginContext *gin.Context) {
@@ -105,11 +106,11 @@ func EditUser(ginContext *gin.Context) {
 		ginContext.Error(err)
 		return
 	}
-	updatedUser, err := useCases.EditUser(userId, update)
+	err := useCases.EditUser(userId, update)
 	if err != nil {
 		ginContext.Error(err)
 		return
 	}
-	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"updatedUser": updatedUser}})
+	ginContext.JSON(http.StatusOK, dto.UserResponse{Data: map[string]interface{}{"success": true}})
 
 }

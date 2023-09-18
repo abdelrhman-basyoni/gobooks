@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/abdelrhman-basyoni/gobooks/utils"
@@ -12,30 +11,6 @@ import (
 )
 
 // define the collections
-type MongoDB struct {
-	client         *mongo.Client
-	database       *mongo.Database
-	userCollection *mongo.Collection
-}
-
-//check if there is an instance of the MongoDB struct
-
-var lock = &sync.Mutex{}
-var instance *MongoDB
-
-// func CreateMongoInstance() *MongoDB {
-// 	// kinda like singlton
-// 	if instance == nil {
-// 		lock.Lock()
-// 		defer lock.Lock()
-// 		if instance == nil {
-// 			log.Println("Creating a database instance")
-// 			instance = &MongoDB{}
-// 			instance.ConnectDB()
-// 		}
-// 	}
-// 	return instance
-// }
 
 func ConnectDB() *mongo.Client {
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(utils.ReadEnv("MONGO_URI")))
@@ -55,10 +30,6 @@ func ConnectDB() *mongo.Client {
 
 	client.Database("golangAPI")
 	log.Printf("Connected to MongoDB")
-	//register to the instance
-	// mongod.client = client
-	// mongod.database = client.Database("gobooks")
-	// mongod.userCollection = mongod.database.Collection("user")
 
 	return client
 }

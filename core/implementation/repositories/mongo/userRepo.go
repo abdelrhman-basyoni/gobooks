@@ -85,12 +85,12 @@ func (u *UserRepo) GetAllUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func (u *UserRepo) EditUser(id string, update map[string]interface{}) (*models.User, error) {
+func (u *UserRepo) EditUser(id string, update map[string]interface{}) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	objId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	filter := bson.M{"_id": objId}
 
@@ -99,9 +99,6 @@ func (u *UserRepo) EditUser(id string, update map[string]interface{}) (*models.U
 		ReturnDocument: &after,
 	}
 	var updatedUser models.User
-	err = userCollection.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, &opt).Decode(&updatedUser)
-	if err != nil {
-		return nil, err
-	}
-	return &updatedUser, nil
+	return userCollection.FindOneAndUpdate(ctx, filter, bson.M{"$set": update}, &opt).Decode(&updatedUser)
+
 }

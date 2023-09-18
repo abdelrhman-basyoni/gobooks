@@ -7,5 +7,5 @@ type UserRepository interface {
 	GetUserById(id string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	GetAllUsers() ([]models.User, error)
-	EditUser(id string, update map[string]interface{}) (*models.User, error)
+	EditUser(id string, update map[string]interface{}) error
 }
